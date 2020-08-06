@@ -1,0 +1,29 @@
+{
+  "name": "free-mentors",
+  "version": "1.0.0",
+  "description": "let's give support to our friends , through mentoring",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Olyx88/FREE-MENTORS.git"
+  },
+  "author": "OLYX",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Olyx88/FREE-MENTORS/issues"
+  },
+  "homepage": "https://github.com/Olyx88/FREE-MENTORS#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.6.1",
+    "joi": "^17.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.27"
+  }
+}
