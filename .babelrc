@@ -1,0 +1,10 @@
+//fromm js v 5 to version 6
+
+{
+    "presets": [
+      "@babel/preset-env"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
+  }

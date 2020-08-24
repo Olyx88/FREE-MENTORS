@@ -1,5 +1,4 @@
 //FILENAME : db.js
-
 const mongoose = require("mongoose");
 // Replace this with your MONGOURI.
 const MONGOURI = 'mongodb://localhost:27017/mentors';
