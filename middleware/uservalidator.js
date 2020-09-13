@@ -20,7 +20,6 @@ if (result.error !== null) {
 }
 next();
 };
-
 static validsignIn(req,res,next)  {
   const schema ={
       //amazina:Joi.string().alphanum().required(),
@@ -38,4 +37,6 @@ return res.status(409).send(
 }
 next();
 };}
+
+
 module.exports = UserMiddleware;

@@ -3,10 +3,9 @@ const bcrypt = require("bcryptjs");
 const { check, validationResult} = require("express-validator/check");
 const jwt = require("jsonwebtoken");
 const encryptPassword =require ('../helpers/Encryptor');
-//const Token =require ('../helpers/tokens');
+const Token =require ('../helpers/tokens');
 //const response =require('../helpers/responseHandler');
 const comparePassword =require('../helpers/decryptor') ;
-
 class UserController {
     static async createUser(req, res) {
         try {
@@ -22,32 +21,37 @@ class UserController {
                 amazina,
                 email,
                 password:encryptedPassword,
-                role:'user'
+                role:'user' //mentor
+
+              
 
             });
-
-            await user.save();
+            let userExist = await User.findOne({
+              email
+            });
+            if(userExist){
+              res.status(409).send({error:"User already exist in our system"});  
+            }
+;            const ser = await user.save();
+          
             const payload = {
-                user: {
-                    id: user.id
-                }
+                
+                    id: user.id,
+                    email:user.email,
+                    // role,
+                    amazina:user.amazina
+                    // pasword // cant be in token
+              
             };
-            jwt.sign(
-                payload,
-                "randomString", {
-                    expiresIn: 10000
-                },
-                (err, token) => {
-                    if (err) throw err;
-                    res.status(200).json({
-                        token
+           const token= await Token.generateToken({payload});
+              res.status(200).json({
+                    token
                     });
-                }
-            );
+
         } catch (error) {
             console.log('=-=--==-=-=-- wow you reached in controller',error)
 
-            res.status(500).send("Error in Saving");
+            res.status(500).send(error,"Error in Saving");
         }
     }
 // USER LOGIN
@@ -76,33 +80,44 @@ static async loginUser (req, res){
                 message: "User Not Exist"
               });
               const isMatch=comparePassword(password,user.password);
-                // console.log('=-=-=-=-=-=-.>>',decyrptedPassword);
-
-         //const isMatch = await bcrypt.compare(password, user.password);
+               
             if (!isMatch)
               return res.status(400).json({
                 message: "Incorrect Password !"
               });
-      
-            const payload = {
-              user: {
-                id: user.id
-              }
-            };
-      
-            jwt.sign(
-              payload,
-              "randomString",
-              {
-                expiresIn: 3600
-              },
-              (err, token) => {
-                if (err) throw err;
-                res.status(200).json({
+              const payload = {
+                
+                _id: user._id,
+                amazina: user.amazina,
+                email: user.email,
+                role: user.role,
+          
+        };
+              const token= await Token.generateToken({payload});
+                          res.status(200).json({
+                            messsage:"You  have logged in successfully",
                   token
                 });
-              }
-            );
+
+            // const payload = {
+            //   user: {
+            //     id: user.id
+            //   }
+            // };
+      
+            // jwt.sign(
+            //   payload,
+            //   "randomString",
+            //   {
+            //     expiresIn: 3600
+            //   },
+            //   (err, token) => {
+            //     if (err) throw err;
+            //     res.status(200).json({
+            //       token
+            //     });
+            //   }
+            // );
           } catch (e) {
             console.error(e);
             res.status(500).json({
@@ -113,37 +128,32 @@ static async loginUser (req, res){
       //change usr to mentor
       static async changeMentor (req, res){
           const _id = req.params.userId;
-        //  userId = await this.model().select('*', 'id=$1', [userId]);
-          //console.log(userId);
-            let user = await User.findOne(
-              // $where: function() { return this.id == this.userId }
-      {    _id}
-            );
-            if (user===null){
-              return res.status(400).json({
-                message: "User Not Exist 100%"
-              });
-            }  
-          if (user.role === 'mentor') {
+        
+          const checkUser= await User.findById(_id);
+        console.log(">>>>>>>>>>>>>>>>>>>>>>",checkUser);
+          if (checkUser===null){
+            
             return res.status(400).json({
-              message: "user already mentor"
+              message: "User Not Exist 100%"
             });
-            }
-            // db.user.update(user)
-            // where role===user set role===mentor && where _id=userId
-           await User.updateOne(
-              { $set: { role: "mentor" }},
-              {where:{_id}}
-           )
+          } 
+          if (checkUser.role==='mentor') {
+            return res. status(400).json({
+              message: 'user already mentor'
+            })
+          }
+          let user = await User.findByIdAndUpdate(
+              // $where: function() { return this.id == this.userId }
+      // {    _id}
+      _id , { role:'mentor'}, {new : true, runValidators: true}
+            );
+          
+            console.log (user);
+            
            return res.status(200).json({
-            message: "user updated successfully"
-          });
-        //  await this.model().update('role=$1', 'id= $2', [true, user[0].id]);
-        //   const mentor = !user[0].mentor;
-        //   const data = {
-        //    mentor,
-        // };
-        //  return response.successMessage(req, res, 'User changed to a mentor successfully', HttpStatus.OK, data);
+            message: "User account changed ",
+            data:user
+          })
      }
     
     // get all users
@@ -162,39 +172,31 @@ static async viewUsers (req, res){
   // get all mentor only
   static async viewMentors (req, res){
     //exports.findAll 
-      User.find(user.role=='mentor')
-      .then(user => {
-          res.send(user);
-      }).catch(err => {
-          res.status(500).send({
-              message: err.message || "Some error occurred while retrieving Mentor."
-          });
-      });
+    const mentors= await User.find({role: 'mentor'});
+    // console.log(mentors);
+    return res.status(200).json({
+      message: "all mentors ",
+      data:mentors
+    })
+
     };
 
-    // Find a single mentor with a mentorId
+//Find a single mentor with a mentorId
+
 static async viewSingle (req, res){
-//exports.findOne = (req, res) => {
-  User.findById(req.params.userId)
-  .then(user => {
-      if(!User) {
-          return res.status(404).send({
-              message: "mentor not found by ID " + req.params.userId
-          });            
-      }
-      res.send(user);
-  }).catch(err => {
-      if(err.kind === 'ObjectId') {
-          return res.status(404).send({
-              message: "mentor not found by id " + req.params.userId
-          });                
-      }
-      return res.status(500).send({
-          message: "Error retrieving mentor with id " + req.params.userId
-      });
-  });
+const mentorId=User.findById(req.params._id);
+
+ if(mentorId.role==='mentor'){
+  return res.status(200).json({
+    message: "mentors found by ID ",
+    data: mentorId
+  })
+  
+  }
+  //console.log("no mentor found");
 };
     } 
 
 module.exports = UserController;
 // export default UserController;
+ 
